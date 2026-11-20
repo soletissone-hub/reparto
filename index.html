@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="es"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Reparto entre hermanos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Inter:wght@400;500;600;700&display=swap">
+<style>body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<style>
+/* Layout: barra fija con "quién soy" + totales; pestañas; grilla de fichas tipo inventario de casa */
+:root{
+  --bg:#f3f4f0; --card:#ffffff; --fg:#1d2420; --muted:#5f6a63; --line:#dde1da;
+  --accent:#1f5240; --accent-ink:#ffffff; --brass:#9a7428; --warn:#b4471f; --ok:#2f7a4a;
+  --ric:#2f62c4; --win:#c0562c; --san:#7b4bb5; --jac:#178283;
+  --display:"Young Serif", Georgia, "Times New Roman", serif;
+  --body:"Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141916; --card:#1c231f; --fg:#e8ece8; --muted:#9aa69f; --line:#2c3530;
+  --accent:#5fb390; --accent-ink:#0d1611; --brass:#d1aa5c; --warn:#ef8a62; --ok:#6cc58f;
+  --ric:#79a0ef; --win:#ee8c62; --san:#b28fe6; --jac:#4fc2c2; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141916; --card:#1c231f; --fg:#e8ece8; --muted:#9aa69f; --line:#2c3530;
+  --accent:#5fb390; --accent-ink:#0d1611; --brass:#d1aa5c; --warn:#ef8a62; --ok:#6cc58f;
+  --ric:#79a0ef; --win:#ee8c62; --san:#b28fe6; --jac:#4fc2c2; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--card)}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--card);border-bottom:1px solid var(--line)}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding-block:12px}
+h1{font-family:var(--display);font-weight:400;font-size:22px;margin:0;text-wrap:balance}
+.who{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.who span{font-size:13px;color:var(--muted)}
+.pbtn{border:2px solid var(--pc);background:transparent;color:var(--pc);border-radius:999px;padding:5px 12px;font:600 14px var(--body);cursor:pointer}
+.pbtn[aria-pressed="true"]{background:var(--pc);color:#fff}
+.tot{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding-bottom:12px}
+.tbox{border-left:4px solid var(--pc);padding:4px 10px;background:var(--bg);border-radius:4px;font-variant-numeric:tabular-nums;min-width:0}
+.tbox b{display:block;font-size:13px;color:var(--pc)}
+.tbox small{color:var(--muted);font-size:12px}
+nav{display:flex;gap:4px;overflow-x:auto;padding-bottom:0}
+nav button{border:0;background:none;color:var(--muted);font:500 14px var(--body);padding:8px 12px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+nav button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+nav .badge{background:var(--warn);color:#fff;border-radius:999px;font-size:11px;padding:1px 6px;margin-left:4px}
+main{padding-block:16px 60px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+.bar input[type=search],.bar select{font:14px var(--body);padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg);min-width:0}
+.bar input[type=search]{flex:1 1 200px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:999px;padding:5px 11px;font:13px var(--body);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.grid{columns:220px;column-gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;min-width:0;width:100%;break-inside:avoid;margin-bottom:14px}
+.card.mine{outline:3px solid var(--me);outline-offset:-1px}
+.ph{background:#fff;display:block;width:100%;border:0;padding:0;cursor:zoom-in;position:relative;min-height:80px}
+.ph img{width:100%;height:auto;max-height:440px;object-fit:contain;display:block}
+.ph .n{position:absolute;right:6px;bottom:6px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;padding:1px 6px;border-radius:999px}
+.body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px;flex:1}
+.meta{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted)}
+.name{font-weight:600;font-size:15px;line-height:1.3}
+.price{font-variant-numeric:tabular-nums;font-weight:700;color:var(--ok)}
+.price:not(.est)::after{content:" ✓ escrito";font-weight:500;font-size:11px}
+.price.est{color:#4d3d00;background:#ffe066;font-weight:600;padding:1px 7px;border-radius:5px;align-self:flex-start;width:fit-content}
+.price.est::after{content:" estimado";font-size:11px;font-weight:500}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:-4px 0 12px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto}
+.dots{display:flex;gap:3px}
+.dot{width:24px;height:24px;border-radius:50%;background:var(--pc);color:#fff;font:600 10px/24px var(--body);text-align:center}
+.pick{border:2px solid var(--me);background:transparent;color:var(--me);border-radius:8px;padding:6px 10px;font:600 13px var(--body);cursor:pointer}
+.pick[aria-pressed="true"]{background:var(--me);color:#fff}
+.pick:disabled{opacity:.4;cursor:default}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.empty{padding:40px 16px;text-align:center;color:var(--muted)}
+.note{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:14px;color:var(--muted);font-size:14px}
+.note b{color:var(--fg)}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;background:var(--card)}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600}
+td.r,th.r{text-align:right}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+.thumb{width:56px;height:44px;object-fit:contain;background:#fff;border-radius:4px;display:block}
+.disp{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px}
+.disp img{width:72px;height:60px;object-fit:contain;background:#fff;border-radius:6px}
+.disp select{font:14px var(--body);padding:6px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+.sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:18px}
+.sbox{background:var(--card);border:1px solid var(--line);border-top:5px solid var(--pc);border-radius:10px;padding:12px 14px}
+.sbox h3{margin:0 0 6px;font:400 20px var(--display);color:var(--pc)}
+.sbox dl{display:grid;grid-template-columns:1fr auto;gap:2px 10px;margin:0;font-variant-numeric:tabular-nums}
+.sbox dt{color:var(--muted)}
+.sbox dd{margin:0;font-weight:600;text-align:right}
+h2{font:400 20px var(--display);margin:22px 0 10px}
+dialog{border:0;border-radius:12px;padding:0;width:min(920px,calc(100vw - 24px));max-height:calc(100dvh - 24px);background:var(--card);color:var(--fg)}
+dialog::backdrop{background:rgba(10,14,12,.6)}
+.dlg{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+.gal{background:#fff;position:relative;min-height:300px;display:flex;flex-direction:column}
+.gal .big{flex:1;display:flex;align-items:center;justify-content:center;min-height:300px}
+.gal .big img{max-height:62dvh;object-fit:contain}
+.strip{display:flex;gap:4px;overflow-x:auto;padding:6px;background:var(--bg)}
+.strip button{border:2px solid transparent;padding:0;background:#fff;border-radius:4px;cursor:pointer;flex:0 0 auto}
+.strip button[aria-current="true"]{border-color:var(--accent)}
+.strip img{width:56px;height:44px;object-fit:contain;display:block}
+.info{padding:16px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;max-height:calc(100dvh - 24px)}
+.info h3{font:400 22px var(--display);margin:0;text-wrap:balance}
+.info label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}
+.info input,.info textarea,.info select{font:14px var(--body);padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
+.info textarea{min-height:70px;resize:vertical}
+.btn{border:0;border-radius:8px;padding:8px 14px;font:600 14px var(--body);cursor:pointer;background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line)}
+.btn.danger{background:transparent;color:var(--warn);border:1px solid var(--warn)}
+.x{position:absolute;top:8px;right:8px;z-index:2;border:0;background:rgba(0,0,0,.55);color:#fff;border-radius:999px;width:34px;height:34px;font-size:18px;cursor:pointer}
+.status{font-size:12px;color:var(--muted);padding-block:6px}
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:14px;z-index:20}
+@media (max-width:720px){
+  .tot{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dlg{grid-template-columns:1fr}
+  .info{max-height:none}
+  .grid{columns:150px;column-gap:10px}
+  .card{margin-bottom:10px}
+  .disp{grid-template-columns:60px minmax(0,1fr)}
+  .disp select{grid-column:1/-1}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head><body>
+<header>
+  <div class="wrap">
+    <div class="top">
+      <h1>Reparto entre hermanos</h1>
+      <div class="who" role="group" aria-label="Quién está eligiendo">
+        <span>Soy:</span>
+        <button class="pbtn" data-p="Ric" id="who-Ric">Ric</button>
+        <button class="pbtn" data-p="Win" id="who-Win">Win</button>
+        <button class="pbtn" data-p="San" id="who-San">San</button>
+        <button class="pbtn" data-p="Jac" id="who-Jac">Jac</button>
+      </div>
+    </div>
+    <div class="tot" id="tot"></div>
+    <nav role="tablist" id="tabs">
+      <button role="tab" data-t="cat" aria-selected="true" id="tab-cat">Catálogo</button>
+      <button role="tab" data-t="mine" id="tab-mine">Mis elecciones</button>
+      <button role="tab" data-t="disp" id="tab-disp">En disputa <span class="badge" id="nd" hidden></span></button>
+      <button role="tab" data-t="sum" id="tab-sum">Resumen</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap" id="main">
+  <div class="empty" id="loading">Cargando el catálogo…</div>
+</main>
+
+<dialog id="dlg"></dialog>
+<div class="toast" id="toast" hidden></div>
+
+
+<script>
+const PEOPLE=["Ric","Win","San","Jac"];
+const PC={Ric:"var(--ric)",Win:"var(--win)",San:"var(--san)",Jac:"var(--jac)"};
+const CATS=["Joyas y relojes","Platería y bronce","Porcelana y figuras","Cristalería","Vajilla y cerámica","Cuadros y grabados","Fotos familiares","Muebles","Lámparas y relojes","Decoración y objetos","Galpón y campo","Para regalar"];
+const GIFT="Para regalar";
+const PIX="data:image/gif;base64,R0lGODlhAQABAAAAACw=";
+const S={base:{},items:{},picks:{Ric:{},Win:{},San:{},Jac:{}},cambios:{},me:null,tab:"cat",cat:"",q:"",room:"",sort:"o",hideTaken:false,showHidden:false,api:null,key:null,loaded:false};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const usd=n=>"US$ "+Math.round(+n||0).toLocaleString("es-AR");
+try{const m=localStorage.getItem("reparto_me");if(PEOPLE.includes(m))S.me=m;}catch(e){}
+
+/* ---------- cifrado: la clave viene en el link (#k=...) ---------- */
+function b64u(s){s=s.replace(/-/g,"+").replace(/_/g,"/");while(s.length%4)s+="=";return Uint8Array.from(atob(s),c=>c.charCodeAt(0));}
+async function getKey(){
+  const m=location.hash.match(/k=([A-Za-z0-9_-]+)/);
+  if(m){try{sessionStorage.setItem("reparto_k",m[1])}catch(e){}}
+  let k=m?m[1]:null;if(!k){try{k=sessionStorage.getItem("reparto_k")}catch(e){}}
+  if(!k)return null;
+  return crypto.subtle.importKey("raw",b64u(k),"AES-GCM",false,["decrypt"]);
+}
+async function dec(buf){const u=new Uint8Array(buf);return crypto.subtle.decrypt({name:"AES-GCM",iv:u.slice(0,12)},S.key,u.slice(12));}
+const imgCache={};
+function loadImg(f){
+  if(!imgCache[f])imgCache[f]=fetch("i/"+f.replace(/\.jpg$/,".bin")).then(r=>r.arrayBuffer()).then(dec).then(b=>URL.createObjectURL(new Blob([b],{type:"image/jpeg"})));
+  return imgCache[f];
+}
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){io.unobserve(e.target);hydrate(e.target);}}),{rootMargin:"400px"});
+function hydrate(el){const f=el.dataset.f;if(!f)return;loadImg(f).then(u=>{el.src=u;el.removeAttribute("data-f");}).catch(()=>{});}
+function watchImgs(root){(root||document).querySelectorAll("img[data-f]").forEach(el=>io.observe(el));}
+function fileOf(i,k=0){return i.ph&&i.ph.length?i.ph[k]:"";}
+
+function toast(t){const el=$("#toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2600);}
+function merge(){const o={};for(const id in S.base)o[id]={...S.base[id],...(S.cambios[id]||{})};S.items=o;}
+function list(){return Object.values(S.items).sort((a,b)=>(a.o??0)-(b.o??0));}
+function visible(){return list().filter(i=>!i.h);}
+function pickers(id){return PEOPLE.filter(p=>S.picks[p][id]);}
+function imgTag(i,cls=""){const f=fileOf(i);return f?`<img ${cls?`class="${cls}"`:""} src="${PIX}" data-f="${esc(f)}" alt="">`:"";}
+
+function setMe(p){S.me=p;try{localStorage.setItem("reparto_me",p)}catch(e){}render();}
+document.querySelectorAll(".pbtn").forEach(b=>{b.style.setProperty("--pc",PC[b.dataset.p]);b.onclick=()=>setMe(b.dataset.p);});
+document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>{S.tab=b.dataset.t;render();});
+
+function totals(){
+  const t={};PEOPLE.forEach(p=>t[p]={n:0,v:0});
+  for(const i of visible())for(const p of pickers(i.id)){t[p].n++;t[p].v+=+i.p||0;}
+  return t;
+}
+function disputed(){return visible().filter(i=>pickers(i.id).length>1);}
+
+function render(){
+  document.querySelectorAll(".pbtn").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.p===S.me)));
+  document.documentElement.style.setProperty("--me",S.me?PC[S.me]:"var(--accent)");
+  document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.t===S.tab)));
+  const t=totals();
+  $("#tot").innerHTML=PEOPLE.map(p=>`<div class="tbox" style="--pc:${PC[p]}"><b>${p}${p===S.me?" · vos":""}</b>${t[p].n} artículos · ${usd(t[p].v)}</div>`).join("");
+  const nd=disputed().length;$("#nd").hidden=!nd;$("#nd").textContent=nd;
+  if(!S.loaded)return;
+  const m=$("#main");
+  if(S.tab==="cat")m.innerHTML=viewCat();
+  else if(S.tab==="mine")m.innerHTML=viewMine();
+  else if(S.tab==="disp")m.innerHTML=viewDisp();
+  else m.innerHTML=viewSum();
+  bind();watchImgs(m);
+}
+
+function priceTag(i,style=""){return `<div class="price${i.ps==="foto"?"":" est"}"${style?` style="${style}"`:""}>${usd(i.p)}</div>`;}
+function card(i){
+  const ps=pickers(i.id),mine=S.me&&ps.includes(S.me);
+  return `<article class="card${mine?" mine":""}">
+    <button class="ph" data-open="${esc(i.id)}" aria-label="Ver ${esc(i.n)}">${imgTag(i)}${i.ph&&i.ph.length>1?`<span class="n">${i.ph.length} fotos</span>`:""}</button>
+    <div class="body">
+      <div class="meta"><span>${esc(i.c)}</span><span>${esc(i.r||"")}</span></div>
+      <div class="name">${esc(i.n)}${i.h?" <small>(oculto)</small>":""}</div>
+      ${priceTag(i)}
+      <div class="row">
+        <div class="dots">${ps.map(p=>`<span class="dot" style="--pc:${PC[p]}" title="${p}">${p}</span>`).join("")}</div>
+        <button class="pick" data-pick="${esc(i.id)}" aria-pressed="${mine}" ${S.me?"":"disabled"}>${mine?"✓ Elegido":"Lo quiero"}</button>
+      </div>
+    </div></article>`;
+}
+
+function viewCat(){
+  const rooms=[...new Set(list().map(i=>i.r).filter(Boolean))].sort();
+  let xs=(S.showHidden?list():visible()).filter(i=>(!S.cat||i.c===S.cat)&&(!S.room||i.r===S.room));
+  if(S.q){const q=S.q.toLowerCase();xs=xs.filter(i=>(i.n+" "+i.d+" "+i.r).toLowerCase().includes(q));}
+  if(S.hideTaken)xs=xs.filter(i=>!pickers(i.id).some(p=>p!==S.me));
+  if(S.sort==="pd")xs.sort((a,b)=>(b.p||0)-(a.p||0));else if(S.sort==="pa")xs.sort((a,b)=>(a.p||0)-(b.p||0));
+  const counts={};visible().forEach(i=>counts[i.c]=(counts[i.c]||0)+1);
+  return `${S.me?"":`<div class="note"><b>Primero elegí quién sos</b> arriba (Ric, Win, San o Jac). Después tocá «Lo quiero» en lo que te interese. Pueden elegir lo mismo varios; eso se resuelve en «En disputa».</div>`}
+  <div class="bar">
+    <input type="search" id="q" placeholder="Buscar (ej. plata, cuadro, mesa)" value="${esc(S.q)}" aria-label="Buscar">
+    <select id="room" aria-label="Ambiente"><option value="">Todos los ambientes</option>${rooms.map(r=>`<option ${r===S.room?"selected":""}>${esc(r)}</option>`).join("")}</select>
+    <select id="sort" aria-label="Ordenar"><option value="o">Orden por tipo</option><option value="pd" ${S.sort==="pd"?"selected":""}>Precio mayor a menor</option><option value="pa" ${S.sort==="pa"?"selected":""}>Precio menor a mayor</option></select>
+    <label class="chip"><input type="checkbox" id="ht" ${S.hideTaken?"checked":""}> Ocultar lo que ya eligió otro</label>
+    <label class="chip"><input type="checkbox" id="sh" ${S.showHidden?"checked":""}> Ver ocultos</label>
+  </div>
+  <div class="legend"><span class="price">US$ 100</span><span>precio que estaba escrito en la foto o lista</span><span class="price est">US$ 100</span><span>precio estimado, sin tasar</span></div>
+  <div class="chips" style="margin-bottom:14px">
+    <button class="chip" data-cat="" aria-pressed="${!S.cat}">Todo (${visible().length})</button>
+    ${CATS.filter(c=>counts[c]||c===GIFT).map(c=>`<button class="chip" data-cat="${esc(c)}" aria-pressed="${S.cat===c}">${c===GIFT?"🎁 ":""}${esc(c)} (${counts[c]||0})</button>`).join("")}
+  </div>
+  ${xs.length?`<div class="grid">${xs.map(card).join("")}</div>`:`<div class="empty">No hay artículos con ese filtro.</div>`}`;
+}
+
+function viewMine(){
+  if(!S.me)return `<div class="note"><b>Elegí quién sos</b> arriba para ver tus elecciones.</div>`;
+  const xs=visible().filter(i=>S.picks[S.me][i.id]);
+  const tot=xs.reduce((s,i)=>s+(+i.p||0),0);
+  return `<div class="note"><b>${S.me}: ${xs.length} artículos · ${usd(tot)}</b>. Los que también eligió otro hermano están marcados con sus iniciales.</div>
+  ${xs.length?`<div class="grid">${xs.map(card).join("")}</div>`:`<div class="empty">Todavía no elegiste nada. Andá al Catálogo y tocá «Lo quiero».</div>`}`;
+}
+
+function viewDisp(){
+  const xs=disputed();
+  if(!xs.length)return `<div class="empty">No hay artículos elegidos por más de un hermano.</div>`;
+  const opt=i=>`<select data-asg="${esc(i.id)}" aria-label="Queda para"><option value="">Sin resolver</option>${pickers(i.id).concat(PEOPLE.filter(p=>!pickers(i.id).includes(p))).map(p=>`<option value="${p}" ${i.a===p?"selected":""}>Queda para ${p}</option>`).join("")}<option value="sorteo" ${i.a==="sorteo"?"selected":""}>Va a sorteo</option></select>`;
+  const pend=xs.filter(i=>!i.a).length;
+  return `<div class="note"><b>${xs.length} artículos elegidos por más de uno</b> · ${pend} sin resolver. Cuando lo decidan, marquen para quién queda.</div>
+  ${xs.map(i=>`<div class="disp"><button class="ph" style="background:none" data-open="${esc(i.id)}" aria-label="Ver ${esc(i.n)}">${imgTag(i)}</button>
+    <div style="min-width:0"><div class="name">${esc(i.n)}</div>${priceTag(i)}
+    <div class="dots" style="margin-top:4px">${pickers(i.id).map(p=>`<span class="dot" style="--pc:${PC[p]}">${p}</span>`).join("")}</div></div>
+    ${opt(i)}</div>`).join("")}`;
+}
+
+function viewSum(){
+  const t=totals(),all=visible();
+  const total=all.reduce((s,i)=>s+(+i.p||0),0);
+  const none=all.filter(i=>!pickers(i.id).length);
+  const solo=p=>all.filter(i=>{const ps=pickers(i.id);return ps.length===1&&ps[0]===p;});
+  const fin=p=>solo(p).concat(all.filter(i=>i.a===p&&pickers(i.id).length>1));
+  return `<div class="note">Valor total del catálogo: <b>${usd(total)}</b> en ${all.length} artículos. Una cuarta parte serían <b>${usd(total/4)}</b> por hermano. La mayoría de los precios son estimados.</div>
+  <div class="sum">${PEOPLE.map(p=>{const f=fin(p),fv=f.reduce((s,i)=>s+(+i.p||0),0);return `<div class="sbox" style="--pc:${PC[p]}"><h3>${p}</h3><dl>
+    <dt>Eligió</dt><dd>${t[p].n} · ${usd(t[p].v)}</dd>
+    <dt>Solo él/ella lo quiere</dt><dd>${solo(p).length}</dd>
+    <dt>Le queda (sin disputas + resueltas)</dt><dd>${f.length} · ${usd(fv)}</dd>
+    <dt>Diferencia con ¼</dt><dd style="color:${fv-total/4>0?"var(--warn)":"var(--ok)"}">${fv-total/4>0?"+":""}${usd(fv-total/4)}</dd></dl></div>`}).join("")}</div>
+  <h2>Nadie lo eligió (${none.length})</h2>
+  ${none.length?`<div class="tw"><table><thead><tr><th></th><th>Artículo</th><th>Tipo</th><th class="r">Precio</th></tr></thead><tbody>
+  ${none.map(i=>`<tr><td>${imgTag(i,"thumb")}</td><td><button class="chip" data-open="${esc(i.id)}">${esc(i.n)}</button></td><td>${esc(i.c)}</td><td class="r">${usd(i.p)}${i.ps==="foto"?"":" <small>estimado</small>"}</td></tr>`).join("")}
+  </tbody></table></div>`:`<div class="empty">Todo tiene al menos un interesado.</div>`}`;
+}
+
+function bind(){
+  document.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>openItem(b.dataset.open));
+  document.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>togglePick(b.dataset.pick));
+  document.querySelectorAll("[data-cat]").forEach(b=>b.onclick=()=>{S.cat=b.dataset.cat;render();});
+  document.querySelectorAll("[data-asg]").forEach(s=>s.onchange=()=>saveItem(s.dataset.asg,{a:s.value||null},"Guardado"));
+  const q=$("#q");if(q){q.oninput=()=>{S.q=q.value;clearTimeout(bind.t);bind.t=setTimeout(()=>{const pos=q.selectionStart;render();const n=$("#q");n.focus();n.setSelectionRange(pos,pos);},250);};}
+  const r=$("#room");if(r)r.onchange=()=>{S.room=r.value;render();};
+  const so=$("#sort");if(so)so.onchange=()=>{S.sort=so.value;render();};
+  const ht=$("#ht");if(ht)ht.onchange=()=>{S.hideTaken=ht.checked;render();};
+  const sh=$("#sh");if(sh)sh.onchange=()=>{S.showHidden=sh.checked;render();};
+}
+
+/* ---------- datos (planilla de Google vía Apps Script) ---------- */
+let pending=0;
+function applyState(st){if(!st||pending)return;S.picks={Ric:{},Win:{},San:{},Jac:{},...(st.picks||{})};S.cambios=st.cambios||{};merge();}
+async function pull(){
+  if(!S.api)return;
+  try{const r=await fetch(S.api,{cache:"no-store"});applyState(await r.json());if(!$("#dlg").open)render();}catch(e){}
+}
+async function post(body){
+  pending++;
+  try{
+    const r=await fetch(S.api,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body)});
+    const j=await r.json();pending--;
+    if(!j.ok)throw new Error(j.error||"error");
+    applyState(j.estado);return true;
+  }catch(e){pending=Math.max(0,pending-1);toast("No se pudo guardar, revisá la conexión y probá de nuevo.");return false;}
+}
+async function togglePick(id){
+  if(!S.me){toast("Primero elegí quién sos");return;}
+  const now=!S.picks[S.me][id];
+  S.picks[S.me]={...S.picks[S.me],[id]:now};render();
+  if(!await post({accion:"elegir",persona:S.me,id,valor:now})){S.picks[S.me]={...S.picks[S.me],[id]:!now};}
+  render();
+}
+async function saveItem(id,patch,msg){
+  S.cambios[id]={...(S.cambios[id]||{}),...patch};merge();render();
+  if(await post({accion:"editar",id,cambios:patch})&&msg)toast(msg);
+  render();
+}
+
+/* ---------- ficha ---------- */
+function openItem(id){
+  const i=S.items[id];if(!i)return;const d=$("#dlg");let k=0;
+  const ps=pickers(id),mine=S.me&&ps.includes(S.me);
+  d.innerHTML=`<button class="x" id="dx" aria-label="Cerrar">×</button><div class="dlg">
+   <div class="gal"><div class="big">${i.ph&&i.ph.length?`<img id="big" src="${PIX}" data-f="${esc(i.ph[0])}" alt="${esc(i.n)}">`:`<span class="empty">Sin foto</span>`}</div>
+   ${i.ph&&i.ph.length>1?`<div class="strip">${i.ph.map((f,j)=>`<button data-k="${j}" aria-current="${j===0}" aria-label="Foto ${j+1}"><img src="${PIX}" data-f="${esc(f)}" alt=""></button>`).join("")}</div>`:""}</div>
+   <div class="info">
+     <h3>${esc(i.n)}</h3>
+     ${priceTag(i,"font-size:18px")}
+     <div>${esc(i.d)}</div>
+     <div class="meta"><span>${esc(i.c)}</span><span>${esc(i.r||"")}</span></div>
+     <div class="dots">${ps.map(p=>`<span class="dot" style="--pc:${PC[p]}">${p}</span>`).join("")||`<small style="color:var(--muted)">Nadie lo eligió todavía</small>`}</div>
+     <button class="pick" id="dpick" aria-pressed="${mine}" ${S.me?"":"disabled"}>${mine?"✓ Elegido":"Lo quiero"}</button>
+     <button class="btn ghost" id="dgift" type="button">${i.c===GIFT?"Sacar de «Para regalar»":"🎁 Pasar a «Para regalar»"}</button>
+     <details><summary style="cursor:pointer;color:var(--muted)">Editar datos del artículo</summary>
+      <form id="ef" style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+       <label>Nombre<input id="e-n" value="${esc(i.n)}"></label>
+       <label>Descripción<textarea id="e-d">${esc(i.d)}</textarea></label>
+       <label>Categoría<select id="e-c">${CATS.map(c=>`<option ${c===i.c?"selected":""}>${esc(c)}</option>`).join("")}</select></label>
+       <label>Ambiente<input id="e-r" value="${esc(i.r||"")}"></label>
+       <label>Precio (US$)<input id="e-p" type="number" min="0" step="10" value="${+i.p||0}"></label>
+       <label>Origen del precio<select id="e-ps"><option value="est" ${i.ps!=="foto"?"selected":""}>Estimado</option><option value="foto" ${i.ps==="foto"?"selected":""}>Escrito / tasado</option></select></label>
+       <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" type="submit">Guardar cambios</button>
+       <button class="btn danger" type="button" id="e-h">${i.h?"Volver a mostrar":"Ocultar del catálogo"}</button></div>
+      </form></details>
+   </div></div>`;
+  d.showModal();watchImgs(d);
+  $("#dx").onclick=()=>d.close();
+  d.onclick=e=>{if(e.target===d)d.close();};
+  d.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{k=+b.dataset.k;loadImg(i.ph[k]).then(u=>$("#big").src=u);d.querySelectorAll("[data-k]").forEach(x=>x.setAttribute("aria-current",String(+x.dataset.k===k)));});
+  $("#dpick").onclick=async()=>{await togglePick(id);openItem(id);};
+  $("#dgift").onclick=()=>{const toGift=i.c!==GIFT;saveItem(id,toGift?{c:GIFT,pc:i.c}:{c:i.pc&&i.pc!==GIFT?i.pc:"Decoración y objetos"},toGift?"Pasado a «Para regalar»":"Sacado de «Para regalar»");d.close();};
+  $("#ef").onsubmit=e=>{e.preventDefault();saveItem(id,{n:$("#e-n").value.trim()||i.n,d:$("#e-d").value.trim(),c:$("#e-c").value,r:$("#e-r").value.trim(),p:Math.max(0,+$("#e-p").value||0),ps:$("#e-ps").value},"Cambios guardados");d.close();};
+  $("#e-h").onclick=()=>{saveItem(id,{h:!i.h},i.h?"Visible otra vez":"Oculto del catálogo");d.close();};
+}
+
+/* ---------- arranque ---------- */
+window.addEventListener("hashchange",()=>{if(/k=/.test(location.hash))location.reload();});
+render();
+(async()=>{
+  try{
+    S.key=await getKey();
+    if(!S.key)throw new Error("sin clave");
+    const data=JSON.parse(new TextDecoder().decode(await dec(await (await fetch("d.bin",{cache:"no-store"})).arrayBuffer())));
+    S.api=data.api;data.items.forEach(i=>S.base[i.id]=i);merge();S.loaded=true;render();
+    await pull();setInterval(pull,15000);
+    document.addEventListener("visibilitychange",()=>{if(!document.hidden)pull();});
+  }catch(e){
+    S.loaded=true;$("#main").innerHTML=`<div class="empty">Para ver el catálogo abrí el link completo que te pasaron (incluye la parte después del #).</div>`;
+  }
+})();
+
+</script>
+</body></html>
