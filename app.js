@@ -191,6 +191,7 @@ function openItem(id){
      <h3>${esc(i.n)}</h3>
      ${priceTag(i,"font-size:18px")}
      <div>${esc(i.d)}</div>
+     ${i.ref?`<div class="ref"><b>De dónde sale el precio:</b> ${esc(i.ref)}${i.refu?` <a href="${esc(i.refu)}" target="_blank" rel="noopener noreferrer">Ver referencia ↗</a>`:""}</div>`:""}
      <div class="meta"><span>${esc(i.c)}</span><span>${esc(i.r||"")}</span></div>
      <div class="dots">${ps.map(p=>`<span class="dot" style="--pc:${PC[p]}">${p}</span>`).join("")||`<small style="color:var(--muted)">Nadie lo eligió todavía</small>`}</div>
      <button class="pick" id="dpick" aria-pressed="${mine}" ${S.me?"":"disabled"}>${mine?"✓ Elegido":"Lo quiero"}</button>
