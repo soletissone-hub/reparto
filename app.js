@@ -23,7 +23,7 @@ function gs(fn,arg){return new Promise((ok,ko)=>{const r=google.script.run.withS
 async function dec(buf){const u=new Uint8Array(buf);return crypto.subtle.decrypt({name:"AES-GCM",iv:u.slice(0,12)},S.key,u.slice(12));}
 const imgCache={};
 function loadImg(f){
-  if(!imgCache[f])imgCache[f]=fetch(BASEURL+"i/"+f.replace(/\.jpg$/,".bin")).then(r=>r.arrayBuffer()).then(dec).then(b=>URL.createObjectURL(new Blob([b],{type:"image/jpeg"})));
+  if(!imgCache[f])imgCache[f]=fetch(BASEURL+"i/"+f.replace(/\.jpg$/,".bin")+"?v=1795193384").then(r=>r.arrayBuffer()).then(dec).then(b=>URL.createObjectURL(new Blob([b],{type:"image/jpeg"})));
   return imgCache[f];
 }
 const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){io.unobserve(e.target);hydrate(e.target);}}),{rootMargin:"400px"});
